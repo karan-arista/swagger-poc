@@ -1,0 +1,262 @@
+openapi: 3.0.0
+info:
+  title: 'Arista Guest Manager API Documentation'
+  contact:
+    email: support@arista.com
+  version: '1.14'
+paths:
+  /servers:
+    get:
+      summary: 'Returns a list of servers'
+      responses:
+        '200':
+          description: 'List of servers'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerListResponse'
+    post:
+      summary: 'Adds a new server'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerRequest'
+      responses:
+        '200':
+          description: 'Server added successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+  '/servers/{sid}':
+    get:
+      summary: 'Returns a server by ID'
+      responses:
+        '200':
+          description: 'The requested server object'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: 'Updates a server'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerRequest'
+      responses:
+        '200':
+          description: 'Server updated successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: 'Deletes a server'
+      responses:
+        '200':
+          description: 'The deleted server object'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    parameters:
+      -
+        name: sid
+        in: path
+        description: 'The server ID'
+        required: true
+        schema:
+          type: integer
+components:
+  schemas:
+    Wrapper:
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+          example: 'Record(s) Found'
+      type: object
+    NotFoundWrapper:
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: object
+          example:
+            other: 'RESOURCE ''1'' NOT FOUND'
+      type: object
+    TotalCount:
+      description: 'Number of objects in the list.'
+      type: integer
+      minimum: 1
+    DateCreatedModified:
+      properties:
+        date_created:
+          type: string
+          example: '2017-11-34 08:25:29.999343'
+        date_modified:
+          type: string
+          example: '2019-01-22 07:24:28.830777'
+      type: object
+    NotFoundResponse:
+      type: object
+      allOf:
+        -
+          $ref: '#/components/schemas/NotFoundWrapper'
+        -
+          properties:
+            data:
+              properties:
+                errorCode:
+                  type: integer
+                message:
+                  type: object
+              type: object
+          type: object
+    ServerRequest:
+      required:
+        - display_name
+        - hostname
+        - username
+        - password
+      properties:
+        display_name:
+          $ref: '#/components/schemas/StringDisplayName'
+        hostname:
+          $ref: '#/components/schemas/String250'
+        username:
+          $ref: '#/components/schemas/String250'
+        password:
+          $ref: '#/components/schemas/String250'
+        is_sso_enabled:
+          $ref: '#/components/schemas/BooleanInteger'
+        instance_id:
+          type: integer
+      type: object
+    SID:
+      properties:
+        sid:
+          type: integer
+      type: object
+    Server:
+      type: object
+      allOf:
+        -
+          $ref: '#/components/schemas/SID'
+        -
+          $ref: '#/components/schemas/ServerRequest'
+        -
+          $ref: '#/components/schemas/LastSyncTime'
+        -
+          $ref: '#/components/schemas/LastSyncStatus'
+        -
+          $ref: '#/components/schemas/DateCreatedModified'
+    ServerResponse:
+      type: object
+      allOf:
+        -
+          $ref: '#/components/schemas/Wrapper'
+        -
+          properties:
+            data:
+              properties:
+                totalCount:
+                  $ref: '#/components/schemas/TotalCount'
+                server:
+                  $ref: '#/components/schemas/Server'
+              type: object
+          type: object
+    ServerListResponse:
+      type: object
+      allOf:
+        -
+          $ref: '#/components/schemas/Wrapper'
+        -
+          properties:
+            data:
+              properties:
+                totalCount:
+                  $ref: '#/components/schemas/TotalCount'
+                server:
+                  type: array
+                  items: { $ref: '#/components/schemas/Server' }
+              type: object
+          type: object
+    BooleanInteger:
+      type: integer
+      maximum: 1
+      minimum: 0
+      example: 1
+    String250:
+      type: string
+      maxLength: 250
+      minLength: 1
+    StringDisplayName:
+      type: string
+      maxLength: 100
+      minLength: 1
+      pattern: '^[a-zA-Z0-9\-\_\ ]+$'
+      example: WirelessManager102
+    SyncTime:
+      type: string
+      format: 'YYYY-MM-DD HH:mm:ss'
+      example: '2019-02-25 15:37:45'
+    LastSyncTime:
+      description: 'The last sync time of the analytics jobs'
+      properties:
+        lastSyncTime:
+          properties:
+            location:
+              $ref: '#/components/schemas/SyncTime'
+            visitor_and_conversion:
+              $ref: '#/components/schemas/SyncTime'
+            loyalty_and_wifi_usage:
+              $ref: '#/components/schemas/SyncTime'
+            wifi_user_data:
+              $ref: '#/components/schemas/SyncTime'
+            location_tracking:
+              $ref: '#/components/schemas/SyncTime'
+            showrooming:
+              $ref: '#/components/schemas/SyncTime'
+          type: object
+      type: object
+    LastSyncStatus:
+      description: 'The last sync status of the analytics jobs'
+      properties:
+        lastSyncStatus:
+          properties:
+            location:
+              type: boolean
+            visitor_and_conversion:
+              type: boolean
+            loyalty_and_wifi_usage:
+              type: boolean
+            wifi_user_data:
+              type: boolean
+            location_tracking:
+              type: boolean
+            showrooming:
+              type: boolean
+          type: object
+      type: object
+  responses:
+    NotFound:
+      description: 'Resource not found'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotFoundResponse'
+
